@@ -1,5 +1,5 @@
 ```md
-# 🚀 ExoVision AI — README
+# ExoVision AI — README
 
 **ExoVision AI** is a hackathon-ready MVP that classifies **Kepler Objects of Interest (KOI)** using a pre-trained **LightGBM** model. It also gives users the option to **fine-tune the existing model** in-memory with their own labeled dataset — no retraining from scratch, just incremental learning.
 
@@ -12,36 +12,36 @@ Designed and built by **Kings of Centrale** 🏆 — where vision meets innovati
 
 ---
 
-## 🧭 Table of Contents
+##  Table of Contents
 
-- [✨ Features](#-features)
-- [📂 Project Structure](#-project-structure)
-- [⚙️ Requirements](#️-requirements)
-- [🚀 Quickstart](#-quickstart)
-- [🧠 How It Works](#-how-it-works)
-- [📊 Data Format](#-data-format)
-- [📡 API Endpoint](#-api-endpoint)
-- [🧩 Example Requests](#-example-requests)
-- [🔁 Fine-Tuning Logic](#-fine-tuning-logic)
-- [💻 Frontend Integration](#-frontend-integration)
-- [🔐 Security Considerations](#-security-considerations)
-- [⚡ Performance Tips](#-performance-tips)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🌱 Future Improvements](#-future-improvements)
-- [👑 Credits](#-credits)
-- [📜 License](#-license)
+- [ Features](#-features)
+- [ Project Structure](#-project-structure)
+- [ Requirements](#️-requirements)
+- [ Quickstart](#-quickstart)
+- [ How It Works](#-how-it-works)
+- [ Data Format](#-data-format)
+- [ API Endpoint](#-api-endpoint)
+- [ Example Requests](#-example-requests)
+- [ Fine-Tuning Logic](#-fine-tuning-logic)
+- [ Frontend Integration](#-frontend-integration)
+- [ Security Considerations](#-security-considerations)
+- [ Performance Tips](#-performance-tips)
+- [ Troubleshooting](#️-troubleshooting)
+- [ Future Improvements](#-future-improvements)
+- [ Credits](#-credits)
+- [ License](#-license)
 
 ---
 
-## ✨ Features
+##  Features
 
-- 🧬 **Pre-trained LightGBM classifier** (`model.pkl`)  
-- 🧠 **Fine-tuning mode** to improve predictions with labeled data  
-- 📈 **Automated classification** of KOIs: *Confirmed*, *Candidate*, *False Positive*  
-- ⚡ **In-memory retraining** for fast hackathon demos  
-- 🌌 **Space-themed interface** with modern UI/UX  
-- 📁 **Excel (.xlsx)** file upload with drag-and-drop support  
-- 🔁 **JSON output** for easy front-end integration  
+-  **Pre-trained LightGBM classifier** (`model.pkl`)  
+-  **Fine-tuning mode** to improve predictions with labeled data  
+-  **Automated classification** of KOIs: *Confirmed*, *Candidate*, *False Positive*  
+-  **In-memory retraining** for fast hackathon demos  
+-  **Space-themed interface** with modern UI/UX  
+-  **Excel (.xlsx)** file upload with drag-and-drop support  
+-  **JSON output** for easy front-end integration  
 
 ---
 
@@ -152,8 +152,6 @@ Each upload triggers backend logic:
 4. Return JSON with predictions + confidence scores
 
 ---
-
-## 📊 Data Format
 
 ### 🛰️ **Classification Mode**
 
