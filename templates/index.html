@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ExoVision AI — Powered by Kings of Centrale</title>
+
+<!-- Keep Chart.js optional -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+<style>
+  /* ===========================
+     Tokens & base styles
+     =========================== */
+  :root{
+    --bg-900:#030718;
+    --bg-800:#061029;
+    --card:#0f1b2a;
+    --muted:#97adbf;
+    --text:#eaf5ff;
+    --accent:#4facfe;
+    --accent-strong:#2b7ef7;
+    --success:#00c176;
+    --glass:rgba(255,255,255,0.02);
+    --border:rgba(255,255,255,0.06);
+    --radius:14px;
+    --glow:0 0 26px rgba(79,172,254,0.14);
+    --panel-glow:0 0 40px rgba(79,172,254,0.06);
+    --shadow-lg:0 18px 50px rgba(2,8,23,0.6);
+    --transition:220ms cubic-bezier(.2,.8,.2,1);
+    --max-width:1200px;
+    --gutter:28px;
+    --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:var(--font-sans);
+    background:
+      radial-gradient(900px 400px at 10% 12%, rgba(79,172,254,0.03), transparent),
+      linear-gradient(180deg,var(--bg-900), #030414 140%);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    display:flex;
+    justify-content:center;
+    padding:40px 20px 80px;
+    overflow-y:auto;
+  }
+
+  /* starfield layer */
+  .space {
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
+  }
+  .star {
+    position:absolute;
+    width:2px; height:2px; border-radius:50%;
+    background:rgba(255,255,255,0.9);
+    opacity:0.1;
+    transform:translateZ(0);
+    will-change: transform, opacity;
+    animation: twinkle linear infinite;
+  }
+  @keyframes twinkle {
+    0%{opacity:0.08}
+    50%{opacity:0.9}
+    100%{opacity:0.08}
+  }
+  /* nebula overlay */
+  .nebula {
+    position:fixed;
+    inset: -10% -10% auto auto;
+    width:70vw; height:70vh;
+    background: radial-gradient(40% 60% at 20% 30%, rgba(79,172,254,0.06), transparent 25%),
+                radial-gradient(30% 40% at 80% 70%, rgba(90,200,160,0.03), transparent 18%);
+    transform:translate3d(0,0,0);
+    filter:blur(28px) saturate(110%);
+    z-index:0;
+    pointer-events:none;
+    mix-blend-mode:screen;
+    opacity:0.9;
+  }
+
+  /* comet animation */
+  .comet {
+    position:fixed;
+    width:320px;height:4px;
+    top:-40px; left:-30%;
+    transform:rotate(-18deg);
+    background:linear-gradient(90deg, rgba(255,255,255,0.0), rgba(255,255,255,0.85), rgba(255,255,255,0.0));
+    filter:blur(6px);
+    opacity:0;
+    pointer-events:none;
+    z-index:1;
+    animation: comet 10s linear infinite;
+  }
+  @keyframes comet {
+    0%{transform:translate(-40vw,-18vh) scale(0.6) rotate(-18deg); opacity:0}
+    8%{opacity:1}
+    40%{transform:translate(90vw,60vh) scale(1.1) rotate(-12deg); opacity:0.9}
+    60%{opacity:0.0}
+    100%{transform:translate(140vw,120vh) scale(1.1)}
+  }
+
+  /* container */
+  .wrap{
+    position:relative;
+    width:100%;
+    max-width:var(--max-width);
+    z-index:2; /* above space layers */
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:24px;
+  }
+
+  /* header */
+  header{
+    width:100%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-radius:calc(var(--radius) + 2px);
+    border:1px solid var(--border);
+    padding:28px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    box-shadow:var(--panel-glow);
+    position:relative;
+    overflow:visible;
+  }
+
+  /* planet + orbit svg */
+  .planet-wrap{
+    width:88px;height:88px; display:flex;align-items:center;justify-content:center;
+    position:relative;
+    margin-bottom:6px;
+  }
+  .planet-svg{width:88px;height:88px;display:block}
+  /* gentle orbiting satellite */
+  .orbit-sat{
+    position:absolute; right:6px; top:6px;
+    width:12px;height:12px;border-radius:50%;
+    background:linear-gradient(135deg,#fff,#c3f2ff);
+    box-shadow:0 0 10px rgba(255,255,255,0.22);
+    animation: satellite 6s linear infinite;
+  }
+  @keyframes satellite{
+    0%{transform:translate(0,0) rotate(0deg)}
+    50%{transform:translate(-6px,-10px) rotate(180deg)}
+    100%{transform:translate(0,0) rotate(360deg)}
+  }
+
+  /* header title */
+  h1{margin:0;font-size:clamp(20px, 2.8vw, 28px); color:var(--accent); text-shadow:var(--glow)}
+  .tagline{margin:0;font-size:14px;color:var(--muted);max-width:900px;text-align:center;line-height:1.45}
+  .praise{color:var(--success);font-weight:700;text-shadow:0 0 6px rgba(0,193,118,0.12)}
+
+  /* main panel */
+  .panel{
+    width:100%;
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:26px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-lg);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+    position:relative;
+  }
+
+  .panel h3{margin:0;color:var(--accent);font-size:18px;text-shadow:var(--glow)}
+  .panel p.desc{margin:0;color:var(--muted);max-width:820px;text-align:center}
+
+  /* mode cards row */
+  .mode-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;width:100%}
+  .mode-card{
+    min-width:280px; max-width:360px;
+    padding:16px;border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), transparent);
+    border:1px solid transparent; cursor:pointer;
+    transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    text-align:left;
+  }
+  .mode-card h4{margin:0;color:var(--accent);font-size:15px}
+  .mode-card p{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+  .mode-card:hover{transform:translateY(-6px);box-shadow:0 14px 36px rgba(2,8,23,0.6)}
+  .mode-card.selected{border-color:var(--accent-strong);box-shadow:0 12px 36px rgba(79,172,254,0.12)}
+
+  /* upload dropzone */
+  .upload{width:100%;max-width:720px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .dropzone{
+    width:100%;padding:20px;border-radius:12px;border:1px dashed rgba(255,255,255,0.06);
+    background:linear-gradient(180deg,var(--glass),transparent);text-align:center;cursor:pointer;
+    transition:box-shadow var(--transition), transform var(--transition);
+  }
+  .dropzone:hover{box-shadow:var(--glow);transform:translateY(-3px)}
+  .drop-cta{font-weight:800;color:var(--text);font-size:15px}
+  .drop-sub{font-size:13px;color:var(--muted);max-width:640px}
+
+  input[type="file"]{display:none}
+
+  .requirements{
+    margin-top:6px;width:100%;max-width:720px;border-left:3px solid var(--accent);
+    padding:12px 14px;border-radius:8px;color:var(--muted);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    text-align:left;font-size:13px;
+  }
+
+  .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .btn{
+    padding:12px 22px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--success));
+    color:white;font-weight:800;cursor:pointer;box-shadow:var(--glow);transition:transform var(--transition),box-shadow var(--transition);
+  }
+  .btn:hover{transform:translateY(-3px);box-shadow:0 0 30px rgba(79,172,254,0.28)}
+  .btn[disabled]{background:var(--border);color:var(--muted);cursor:not-allowed;box-shadow:none}
+  .btn.alt{background:transparent;border:1px solid var(--border);color:var(--accent);font-weight:700}
+
+  /* results */
+  .results{width:100%;max-width:780px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow-lg);text-align:center}
+  .results h4{margin:0;color:var(--accent);text-shadow:var(--glow)}
+  .results .meta{color:var(--muted);font-size:13px;margin-top:6px}
+  .results table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;text-align:center}
+  .results th,.results td{padding:12px 8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .results thead th{color:var(--accent);font-weight:700}
+  .results tbody tr:nth-child(even){background:rgba(255,255,255,0.01)}
+
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:6px}
+
+  /* responsive tweaks */
+  @media (max-width:820px){
+    .drop-sub{font-size:12.5px}
+    .mode-card{max-width:100%}
+    .planet-wrap{width:64px;height:64px}
+  }
+
+  /* accessible focus */
+  .mode-card:focus, .dropzone:focus, .btn:focus{outline:3px solid rgba(79,172,254,0.06);outline-offset:6px}
+</style>
+</head>
+<body>
+  <!-- space layers -->
+  <div class="space" aria-hidden="true">
+    <!-- nebula -->
+    <div class="nebula" style="position:fixed;inset:auto 0 10% 10%;z-index:0;pointer-events:none;"></div>
+    <!-- starfield: create with JS for performance control -->
+    <!-- comet -->
+    <div class="comet" aria-hidden="true"></div>
+  </div>
+
+  <div class="wrap" id="site-wrap" role="main" aria-labelledby="main-title">
+    <!-- Header with planet SVG & orbiting moon -->
+    <header>
+      <div class="planet-wrap" aria-hidden="true">
+        <!-- SVG planet with soft gradient + ring -->
+        <svg class="planet-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Planet logo">
+          <defs>
+            <radialGradient id="g1" cx="40%" cy="30%">
+              <stop offset="0%" stop-color="#a6e6ff"/>
+              <stop offset="60%" stop-color="#4facfe"/>
+              <stop offset="100%" stop-color="#2b7ef7"/>
+            </radialGradient>
+            <linearGradient id="ring" x1="0" x2="1">
+              <stop offset="0" stop-color="#4facfe" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#00c176" stop-opacity="0.12"/>
+            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- ring -->
+          <ellipse cx="60" cy="62" rx="42" ry="14" fill="none" stroke="url(#ring)" stroke-width="3" opacity="0.7" transform="rotate(-18 60 62)"/>
+          <!-- planet body -->
+          <circle cx="60" cy="60" r="30" fill="url(#g1)" filter="url(#glow)"/>
+          <!-- subtle surface highlight -->
+          <ellipse cx="50" cy="48" rx="8" ry="4" fill="rgba(255,255,255,0.35)" opacity="0.18"/>
+        </svg>
+
+        <!-- orbiting satellite (pure CSS animated) -->
+        <div class="orbit-sat" aria-hidden="true"></div>
+      </div>
+
+      <h1 id="main-title">ExoVision AI</h1>
+      <p class="tagline">A visionary step in exoplanet discovery — merging AI precision with cosmic curiosity.</p>
+      <div class="praise">Crafted with brilliance by <strong>Kings of Centrale</strong> — where vision meets innovation.</div>
+    </header>
+
+    <!-- main panel -->
+    <section class="panel" aria-labelledby="upload-title">
+      <h3 id="upload-title">Upload KOI Dataset</h3>
+      <p class="desc">
+        Upload Kepler Object of Interest (KOI) data in Excel (.xlsx) to classify or fine-tune the LightGBM ensemble.
+        <br>
+        <a class="template-link" href="https://docs.google.com/spreadsheets/d/19VyFDYO1THzkQIptpmWgSH5Xg9JaF77c/edit?usp=share_link" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;font-weight:700">Download template</a>
+      </p>
+
+      <!-- mode selection -->
+      <div class="mode-row" role="tablist" aria-label="Model mode">
+        <div id="modePredict" class="mode-card selected" role="tab" tabindex="0" aria-selected="true" onclick="selectMode('predict')">
+          <h4>Classification Mode</h4>
+          <p>Use the pre-trained LightGBM to predict Confirmed / Candidate / False Positive outcomes.</p>
+        </div>
+
+        <div id="modeRetrain" class="mode-card" role="tab" tabindex="0" aria-selected="false" onclick="selectMode('retrain')">
+          <h4>Fine-tuning Mode</h4>
+          <p>Fine-tune the LightGBM model with your labeled KOI dataset (in-memory during server runtime).</p>
+        </div>
+      </div>
+
+      <!-- upload area -->
+      <div class="upload" aria-describedby="upload-desc">
+        <label for="xlsx" class="dropzone" id="upload-desc" tabindex="0" aria-label="Upload Excel file or drop here">
+          <div class="drop-cta">Select Excel file (.xlsx)</div>
+          <div class="drop-sub">or drag & drop — include sheet "Data" for prediction or column <code>Disposition_Using_Kepler_Data</code> for retraining.</div>
+        </label>
+        <input id="xlsx" type="file" accept=".xlsx" />
+
+        <div class="requirements" id="requirements">
+          <strong>Classification Mode Requirements:</strong><br>
+          • Excel with 'Data' sheet<br>
+          • Required columns: orbital_period, transit_depth, transit_duration, planet_radius, stellar_temperature
+        </div>
+
+        <div class="actions">
+          <button id="runBtn" class="btn" disabled><span id="runLabel">Run Classification Analysis</span></button>
+          <button id="resetBtn" class="btn alt" type="button">Reset</button>
+        </div>
+
+        <div class="results" id="results" aria-live="polite">
+          <h4>Classification Results</h4>
+          <div class="meta" id="resultsMeta">Awaiting data — upload a KOI .xlsx to begin.</div>
+          <div id="resultsBody" style="margin-top:10px">
+            <p style="color:var(--muted)">No results yet. Upload a dataset and choose a mode to start.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>&copy; 2025 Kings of Centrale — ExoVision AI: Where Science Meets Vision.</footer>
+  </div>
+
+<!-- =========================
+     Scripts: starfield, comet, UI behavior & API integration
+     ========================= -->
+<script>
+  // generate starfield (lightweight)
+  (function createStars(){
+    const container = document.querySelector('.space');
+    const count = 120; // moderate
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    for(let i=0;i<count;i++){
+      const s = document.createElement('div');
+      s.className = 'star';
+      const left = Math.random()*100;
+      const top = Math.random()*100;
+      s.style.left = left + '%';
+      s.style.top = top + '%';
+      // vary size & animation speed
+      const size = (Math.random()*1.6 + 0.6).toFixed(2);
+      s.style.width = `${size}px`; s.style.height = `${size}px`;
+      const dur = (Math.random()*3 + 2).toFixed(2) + 's';
+      s.style.animationDuration = dur;
+      const delay = (Math.random()*5).toFixed(2) + 's';
+      s.style.animationDelay = delay;
+      s.style.opacity = (0.06 + Math.random()*0.22).toFixed(2);
+      container.appendChild(s);
+    }
+  })();
+
+  // comet element is animated via CSS keyframes; no extra script required
+
+  // small parallax effect on mouse move (subtle)
+  (function parallax(){
+    const neb = document.querySelector('.nebula');
+    const stars = document.querySelectorAll('.star');
+    document.addEventListener('mousemove', (e) => {
+      const cw = window.innerWidth;
+      const ch = window.innerHeight;
+      const nx = (e.clientX / cw) - 0.5; // -0.5 .. 0.5
+      const ny = (e.clientY / ch) - 0.5;
+      if(neb) neb.style.transform = `translate3d(${nx * 18}px, ${ny * 10}px, 0)`;
+      // tiny parallax for stars
+      stars.forEach((st, idx) => {
+        const depth = (idx % 4) * 0.25 + 0.2;
+        st.style.transform = `translate3d(${nx * depth * 6}px, ${ny * depth * 6}px, 0)`;
+      });
+    });
+  })();
+
+  // UI behavior & API integration (kept from previous)
+  const fileInput = document.getElementById('xlsx');
+  const dropzone = document.querySelector('.dropzone');
+  const runBtn = document.getElementById('runBtn');
+  const runLabel = document.getElementById('runLabel');
+  const resetBtn = document.getElementById('resetBtn');
+  const resultsMeta = document.getElementById('resultsMeta');
+  const resultsBody = document.getElementById('resultsBody');
+  const requirements = document.getElementById('requirements');
+  const modePredict = document.getElementById('modePredict');
+  const modeRetrain = document.getElementById('modeRetrain');
+
+  let currentMode = 'predict';
+  let selectedFile = null;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.boxShadow = '0 0 28px rgba(79,172,254,0.12)'; });
+  dropzone.addEventListener('dragleave', (e) => { dropzone.style.boxShadow = ''; });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.boxShadow = '';
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) {
+      fileInput.files = e.dataTransfer.files;
+      onFileSelected(f);
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) onFileSelected(f);
+  });
+
+  function onFileSelected(f){
+    selectedFile = f;
+    runBtn.disabled = false;
+    resultsMeta.textContent = `File ready: ${f.name} — Mode: ${currentMode}`;
+    resultsBody.innerHTML = `<p style="color:var(--muted)">Ready to process <strong>${escapeHtml(f.name)}</strong>. Click "Run Classification Analysis".</p>`;
+  }
+
+  function selectMode(mode){
+    currentMode = mode;
+    if(mode === 'predict'){
+      modePredict.classList.add('selected');
+      modeRetrain.classList.remove('selected');
+      requirements.innerHTML = `<strong>Classification Mode Requirements:</strong><br>• Excel with 'Data' sheet<br>• Required columns: orbital_period, transit_depth, transit_duration, planet_radius, stellar_temperature`;
+    } else {
+      modeRetrain.classList.add('selected');
+      modePredict.classList.remove('selected');
+      requirements.innerHTML = `<strong>Fine-tuning Mode Requirements:</strong><br>• Excel with labeled KOI data<br>• Column <code>Disposition_Using_Kepler_Data</code> with values: CONFIRMED, CANDIDATE, FALSE POSITIVE`;
+    }
+    resultsMeta.textContent = selectedFile ? `File ready: ${selectedFile.name} — Mode: ${currentMode}` : `Mode: ${currentMode}`;
+  }
+  window.selectMode = selectMode;
+
+  resetBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    selectedFile = null;
+    runBtn.disabled = true;
+    resultsMeta.textContent = 'Awaiting data — upload a KOI .xlsx to begin.';
+    resultsBody.innerHTML = `<p style="color:var(--muted)">No results yet. Upload dataset and choose a mode to start.</p>`;
+  });
+
+  runBtn.addEventListener('click', async () => {
+    if(!selectedFile){ alert('Please select an Excel file first.'); return; }
+    runBtn.disabled = true;
+    const spinner = `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;border:3px solid rgba(255,255,255,0.14);border-top-color:var(--accent);margin-right:8px;animation:spin 700ms linear infinite;"></span>`;
+    runLabel.innerHTML = `${spinner}Processing...`;
+
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('mode', currentMode);
+
+    try {
+      const resp = await fetch('/api/process', { method: 'POST', body: fd });
+      const data = await resp.json();
+
+      if(!resp.ok) {
+        const msg = data?.error || data?.details || 'Server error';
+        throw new Error(msg);
+      }
+
+      renderResults(data);
+      resultsMeta.textContent = `Completed — Mode: ${data.mode} • ${data.results.length} rows`;
+    } catch (err) {
+      resultsBody.innerHTML = `<p style="color:var(--danger);font-weight:700">Error: ${escapeHtml(err.message)}</p>`;
+      resultsMeta.textContent = 'Error — see details.';
+    } finally {
+      runBtn.disabled = false;
+      runLabel.textContent = 'Run Classification Analysis';
+    }
+  });
+
+  function renderResults(data){
+    if(!data || !Array.isArray(data.results) || data.results.length === 0){
+      resultsBody.innerHTML = `<p style="color:var(--muted)">No results returned.</p>`;
+      return;
+    }
+
+    const used = Array.isArray(data.used_features) ? data.used_features.join(', ') : 'N/A';
+    const rows = data.results.map((r,i) => {
+      const conf = (Number(r.confidence) * 100).toFixed(1) + '%';
+      return `<tr>
+                <td>${i+1}</td>
+                <td>${escapeHtml(String(r.predicted_label))}</td>
+                <td class="confidence">${conf}</td>
+              </tr>`;
+    }).join('');
+
+    resultsBody.innerHTML = `
+      <div style="margin-top:8px;color:var(--muted);font-size:13px">Used features: ${escapeHtml(used)}</div>
+      <table aria-label="classification results" role="table">
+        <thead><tr><th>#</th><th>Prediction</th><th>Confidence</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // keyframe spinner CSS injection
+  const style = document.createElement('style');
+  style.textContent = `@keyframes spin{to{transform:rotate(360deg)}}`;
+  document.head.appendChild(style);
+
+  // keyboard support for mode cards
+  const mPredict = document.getElementById('modePredict');
+  const mRetrain = document.getElementById('modeRetrain');
+  if(mPredict) mPredict.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') { selectMode('predict'); } });
+  if(mRetrain) mRetrain.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') { selectMode('retrain'); } });
+</script>
+</body>
+</html>
