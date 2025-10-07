@@ -1,4 +1,3 @@
-```md
 # ExoVision AI — README
 
 **ExoVision AI** is a hackathon-ready MVP that classifies **Kepler Objects of Interest (KOI)** using a pre-trained **LightGBM** model. It also gives users the option to **fine-tune the existing model** in-memory with their own labeled dataset — no retraining from scratch, just incremental learning.
